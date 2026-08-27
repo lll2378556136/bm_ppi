@@ -1,0 +1,32 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "bm_ppi"
+version = "0.0.1"
+description = "Proteome-wide protein-protein interaction prediction in Bombyx mori"
+authors = [
+  { name = "lll" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License"
+]
+requires-python = "~=3.10.0"
+
+
+[tool.ruff]
+line-length = 99
+src = ["bm_ppi"]
+include = ["pyproject.toml", "bm_ppi/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["bm_ppi"]
+force-sort-within-sections = true
+

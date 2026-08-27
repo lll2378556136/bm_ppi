@@ -1,0 +1,30 @@
+[workspace]
+name = "bm_ppi"
+description = "Proteome-wide protein-protein interaction prediction in Bombyx mori"
+version = "0.1.0"
+channels = ['conda-forge', "bioconda"]
+platforms = ['linux-64']
+
+[dependencies]
+python = "~=3.10.0"
+loguru = "*"
+ruff = "*"
+tqdm = "*"
+typer = "*"
+pip = "*"
+ipykernel = ">=7.1.0,<8"
+mmseqs2 = ">=18.8cc5c,<19"
+hmmer = ">=3.4,<4"
+aria2 = ">=1.37.0,<2"
+pyreadr = ">=0.5.4,<0.6"
+joblib = ">=1.5.3,<2"
+cd-hit = ">=4.8.1,<5"
+
+[pypi-dependencies]
+mkdocs = "*"
+python-dotenv = "*"
+bm_ppi = { path = ".", editable = true }
+colabfold = { git = "https://github.com/sokrypton/ColabFold" }
+biopython = "<1.86"
+polars = ">=1.0.0"
+numpy = ">=1.24.0"
