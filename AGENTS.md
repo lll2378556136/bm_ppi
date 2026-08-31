@@ -62,3 +62,11 @@ Multi-tool Collaboration: Invoke required MCP tools within the subagent
 Code Quality Assurance: Perform code review, testing, and optimization
 Result Verification and Optimization: Ensure output aligns with best practices
 Core Principle: The main context focuses on routing, while subagents bear the complexity, ensuring a dual enhancement of both efficiency and quality.
+
+## Project Context
+
+- This repository (`bm_ppi`) is a new project for proteome-wide protein-protein interaction (PPI) screening in *Bombyx mori*, created with the Cookiecutter Data Science (CCDS) template.
+- `third_party/pirna_ppi/` is a reference repository from a colleague's piRNA-PPI project. It is not the main pipeline and should be treated only as a reference.
+- The main workflow is based on, but distinct from, the piRNA-PPI pipeline. It adds extra filtering stages: subcellular localization filtering, QC, and DCA scoring.
+- The full *Bombyx mori* proteome has been downloaded from NCBI and de-duplicated with CD-HIT, producing `data/raw/protein_nr95.faa` and `data/raw/protein_nr95.faa.clstr`.
+- Do not assume that scripts or commands from `third_party/pirna_ppi/` should be run as-is in this project unless they are being referenced or adapted explicitly.
