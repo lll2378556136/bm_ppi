@@ -1,28 +1,34 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=colabfold_search
-#SBATCH --output=/share/home/lll/projects/bm_ppi/logs/colabfold_search_%j.out
-#SBATCH --error=/share/home/lll/projects/bm_ppi/logs/colabfold_search_%j.err
+#SBATCH --output=logs/colabfold_search_%j.out
+#SBATCH --error=logs/colabfold_search_%j.err
 #SBATCH --partition=gpu
 #SBATCH --nodelist=node4
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=50
-#SBATCH --mem=128G
-#SBATCH --gres=gpu:1
-#SBATCH --time=24:00:00
+#SBATCH --cpus-per-task=112
+#SBATCH --mem=110G
+#SBATCH --gres=gpu:2
+#SBATCH --time=72:00:00
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
-WORK_DIR="${PROJECT_ROOT}"
+# Use SLURM_SUBMIT_DIR so the script works even if SLURM copies it to a spool dir.
+PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/share/home/lll/projects/bm_ppi}"
 SIF="${PROJECT_ROOT}/sifs/colabfold_1.6.2-cuda12.sif"
-CACHE_DIR="${PROJECT_ROOT}/cache"
-INPUT_FASTA="${WORK_DIR}/data/raw/GCF_030269925.1_ASM3026992v2_longest_protein_by_gene.faa"
-OUTPUT_DIR="${WORK_DIR}/data/processed/colabfold_20260831"
-DB_DIR="/data/ssd/colabfold_db"
 
-mkdir -p "${PROJECT_ROOT}/logs" "${CACHE_DIR}" "${OUTPUT_DIR}"
+# Use a short run ID so that the MSA directory and the later batch output match.
+RUN_ID="gcf"
+
+# Input FASTA. Use the pilot for testing; change this to the full GCF file for production.
+INPUT_FASTA="${PROJECT_ROOT}/data/raw/GCF_030269925.1_ASM3026992v2_longest_protein_by_gene.faa" 
+# INPUT_FASTA="${PROJECT_ROOT}/data/raw/GCF_030269925.1_ASM3026992v2_longest_protein_by_gene.faa"
+
+# Local MMseqs2 databases on node4's SSD.
+DB_DIR="/data/ssd/colabfold_db"
+MSA_DIR="${PROJECT_ROOT}/data/interim/colabfold_msas_${RUN_ID}"
+
+mkdir -p "${PROJECT_ROOT}/logs" "${MSA_DIR}"
 
 if [[ ! -f "${SIF}" ]]; then
     echo "Error: Singularity image not found: ${SIF}" >&2
@@ -35,24 +41,29 @@ if [[ ! -f "${INPUT_FASTA}" ]]; then
 fi
 
 if [[ ! -d "${DB_DIR}" ]]; then
-    echo "Error: ColabFold database not found: ${DB_DIR}" >&2
+    echo "Error: ColabFold database directory not found: ${DB_DIR}" >&2
     exit 1
 fi
 
-echo "Starting ColabFold search at $(date --iso-8601=seconds)"
+echo "Starting ColabFold MSA search at $(date --iso-8601=seconds)"
 echo "Input: ${INPUT_FASTA}"
-echo "Database: ${DB_DIR}"
-echo "Output: ${OUTPUT_DIR}"
+echo "DB: ${DB_DIR}"
+echo "Output MSAs: ${MSA_DIR}"
 
-# Use mmseqs inside the container; bind node-local SSD DB and project paths.
+# Strip the project root prefix so that paths are relative to the /work mount.
+INPUT_IN_WORK="/work/${INPUT_FASTA#"${PROJECT_ROOT}/"}"
+MSA_IN_WORK="/work/${MSA_DIR#"${PROJECT_ROOT}/"}"
+
+# Mount project (work) and database dir (read-only) into the container.
+# The ghcr.io/sokrypton/colabfold image has mmseqs2 installed, so we use the container's binary.
 singularity run --nv \
-    -B "${CACHE_DIR}:/cache" \
-    -B "${WORK_DIR}:/work" \
-    -B /data/ssd:/data/ssd \
+    -B "${PROJECT_ROOT}:/work" \
+    -B "${DB_DIR}:/db:ro" \
     "${SIF}" \
-    colabfold_search --gpu 1 \
-        "/work/data/raw/$(basename "${INPUT_FASTA}")" \
-        /data/ssd/colabfold_db \
-        /work/data/processed/colabfold_20260831
+    colabfold_search --mmseqs mmseqs \
+      "${INPUT_IN_WORK}" \
+      /db \
+      "${MSA_IN_WORK}" --gpu 1\
+      --threads "${SLURM_CPUS_PER_TASK}"
 
-echo "ColabFold search completed at $(date --iso-8601=seconds)"
+echo "ColabFold MSA search completed at $(date --iso-8601=seconds)"

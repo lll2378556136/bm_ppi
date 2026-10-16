@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=colabfold_download
-#SBATCH --output=/share/home/gyk/projects/bm_ppi/logs/colabfold_download_%j.out
-#SBATCH --error=/share/home/gyk/projects/bm_ppi/logs/colabfold_download_%j.err
+#SBATCH --output=/share/home/lll/projects/bm_ppi/logs/colabfold_download_%j.out
+#SBATCH --error=/share/home/lll/projects/bm_ppi/logs/colabfold_download_%j.err
 #SBATCH --partition=gpu
 #SBATCH --nodelist=node4
 #SBATCH --nodes=1
@@ -13,10 +13,12 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
+# SLURM may copy the batch script to a spool dir on the compute node, so use
+# SLURM_SUBMIT_DIR to reliably locate the project root.
+PROJECT_ROOT="${SLURM_SUBMIT_DIR:-/share/home/lll/projects/bm_ppi}"
 SIF="${PROJECT_ROOT}/sifs/colabfold_1.6.2-cuda12.sif"
-CACHE_DIR="${PROJECT_ROOT}/cache"
+# Place ColabFold cache on node4's local SSD for faster I/O.
+CACHE_DIR="/data/ssd/cache"
 
 mkdir -p "${PROJECT_ROOT}/logs" "${CACHE_DIR}"
 
