@@ -194,3 +194,14 @@ cython_debug/
 /sifs/
 *.sif
 /.tmp/
+/logs/
+
+# Local scratch / temp working directories
+/scratch/
+/cell/
+/seek/
+/stop/
+
+# Backup files
+*.bak
+pixi.toml.*_backup
